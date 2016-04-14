@@ -1,0 +1,24 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}Hashtag - {{hashtag}}{% endblock %}
+
+{% block content %}
+<div class="login-page bk-img" style="background-image: url(../templates/assets/img/login-bg.jpg);">
+    <div class="form-content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 col-md-offset-3">
+                    <h1 class="text-center text-bold text-light mt-4x">Log in with instagram</h1>
+                    <div class="well row pt-2x pb-3x bk-light">
+                        <div class="col-md-8 col-md-offset-2">
+                            <a href="{{ url }}" class="btn btn-block btn-social btn-instagram">
+                                <span class="fa fa-instagram" style="line-height: inherit;"></span> Sign in with Instagram
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

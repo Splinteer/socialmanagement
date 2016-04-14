@@ -1,0 +1,9 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}Hashtag - {{hashtag}}{% endblock %}
+
+{% block content %}
+    {% for r in result.data %}
+        <img src="{{ r.images.standard_resolution.url }}">
+    {% endfor %}
+{% endblock %}
