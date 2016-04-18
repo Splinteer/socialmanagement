@@ -68,12 +68,53 @@ $app->get('/callback', function ($request, $response, $args) {
     ));
     //$instagram->setSignedHeader(true);
 
-    $data = $instagram->getOAuthToken($_GET['code'], true);
+    $data = $instagram->getOAuthToken($_GET['code']);
 
-    if (! $data) {
+    if (! is_object($data)) {
        return $response->withRedirect(SERVER_ROOT . 'login');
     } else {
-        $_SESSION['access_token'] = $data;
+        $pdo = new PDO(DB_DSN, DB_USER, DB_PSWD);
+        $sql = "SELECT COUNT(username) FROM user WHERE username=" . $pdo->quote($data->user->username);
+        $res = $pdo->query($sql)->fetchColumn();
+
+        if (intval($res) == 0) {
+            $stmt = $pdo->prepare('INSERT INTO user (
+                username,
+                access_token
+                ) VALUES (
+                :username,
+                :access_token
+                )');
+        } else {
+            $stmt = $pdo->prepare('UPDATE user SET
+                access_token=:access_token
+                WHERE username=:username');
+        }
+        $stmt->bindValue(':username', $data->user->username, PDO::PARAM_STR);
+        $stmt->bindValue(':access_token', $data->access_token, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $instagram->setAccessToken($data->access_token);
+        $user = $instagram->getUser();
+
+        $stmt = $pdo->prepare('INSERT IGNORE INTO statistic (
+            username,
+            date,
+            followers,
+            posts
+            ) VALUES (
+            :username,
+            :date,
+            :followers,
+            :posts
+            )');
+        $stmt->bindValue(':username', $data->user->username, PDO::PARAM_STR);
+        $stmt->bindValue(':date', date('Y-m-d'), PDO::PARAM_STR);
+        $stmt->bindValue(':followers', $user->data->counts->followed_by, PDO::PARAM_INT);
+        $stmt->bindValue(':posts', $user->data->counts->media, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $_SESSION['access_token'] = $data->access_token;
         return $response->withRedirect(SERVER_ROOT);
     }
 
