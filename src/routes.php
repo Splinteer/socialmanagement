@@ -37,7 +37,11 @@ $app->get('/login', function ($request, $response, $args) {
         ));
         //$instagram->setSignedHeader(true);
 
-        $url = $instagram->getLoginUrl(array('basic', 'likes', 'relationships', 'comments'));
+        $url = $instagram->getLoginUrl(array(
+            'basic',
+            'likes',
+            'relationships'
+        ));;
 
         // Render index view
         return $this->view->render($response, 'login.html.twig', [
@@ -74,22 +78,26 @@ $app->get('/callback', function ($request, $response, $args) {
        return $response->withRedirect(SERVER_ROOT . 'login');
     } else {
         $pdo = new PDO(DB_DSN, DB_USER, DB_PSWD);
-        $sql = "SELECT COUNT(username) FROM user WHERE username=" . $pdo->quote($data->user->username);
+        $sql = "SELECT COUNT(id) FROM user WHERE id=" . intval($data->user->id);
         $res = $pdo->query($sql)->fetchColumn();
 
         if (intval($res) == 0) {
             $stmt = $pdo->prepare('INSERT INTO user (
+                id,
                 username,
                 access_token
                 ) VALUES (
+                :id,
                 :username,
                 :access_token
                 )');
         } else {
             $stmt = $pdo->prepare('UPDATE user SET
+                username=:username
                 access_token=:access_token
-                WHERE username=:username');
+                WHERE id=:id');
         }
+        $stmt->bindValue(':id', $data->user->id, PDO::PARAM_STR);
         $stmt->bindValue(':username', $data->user->username, PDO::PARAM_STR);
         $stmt->bindValue(':access_token', $data->access_token, PDO::PARAM_STR);
         $stmt->execute();
@@ -98,17 +106,17 @@ $app->get('/callback', function ($request, $response, $args) {
         $user = $instagram->getUser();
 
         $stmt = $pdo->prepare('INSERT IGNORE INTO statistic (
-            username,
+            id,
             date,
             followers,
             posts
             ) VALUES (
-            :username,
+            :id,
             :date,
             :followers,
             :posts
             )');
-        $stmt->bindValue(':username', $data->user->username, PDO::PARAM_STR);
+        $stmt->bindValue(':id', $data->user->id, PDO::PARAM_STR);
         $stmt->bindValue(':date', date('Y-m-d'), PDO::PARAM_STR);
         $stmt->bindValue(':followers', $user->data->counts->followed_by, PDO::PARAM_INT);
         $stmt->bindValue(':posts', $user->data->counts->media, PDO::PARAM_INT);
