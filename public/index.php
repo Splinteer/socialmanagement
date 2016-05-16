@@ -8,16 +8,14 @@ if (PHP_SAPI == 'cli-server') {
     }
 }
 
-require __DIR__ . '/../vendor/autoload.php';
+// Set up config
+require __DIR__ . '/../src/config.php';
 
 session_start();
 
 // Instantiate the app
 $settings = require __DIR__ . '/../src/settings.php';
 $app = new \Slim\App($settings);
-
-// Set up config
-require __DIR__ . '/../src/config.php';
 
 // Set up i18n
 require __DIR__ . '/../src/i18n.php';

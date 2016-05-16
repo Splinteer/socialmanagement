@@ -1,21 +1,14 @@
 <?php
 // Routes
-use MetzWeb\Instagram\Instagram;
 
 $app->get('/', function ($request, $response, $args) {
     // Sample log message
     $this->logger->info("Slim-Skeleton '/' route");
 
     if (! isset($_SESSION['access_token'])) {
-        var_dump($_SESSION);
         return $response->withRedirect(SERVER_ROOT . 'login');
     } else {
-        $instagram = new Instagram(array(
-            'apiKey'      => IG_CLIENT_ID,
-            'apiSecret'   => IG_CLIENT_SECRET,
-            'apiCallback' => IG_CLIENT_CALLBACK
-        ));
-        //$instagram->setSignedHeader(true);
+        global $instagram;
         $instagram->setAccessToken($_SESSION['access_token']);
 
         // Render index view
@@ -27,15 +20,10 @@ $app->get('/', function ($request, $response, $args) {
 
 $app->get('/login', function ($request, $response, $args) {
     // Sample log message
-    $this->logger->info("Slim-Skeleton '/' route");
+    $this->logger->info("Slim-Skeleton '/login' route");
 
     if (! isset($_SESSION['access_token'])) {
-        $instagram = new Instagram(array(
-            'apiKey'      => IG_CLIENT_ID,
-            'apiSecret'   => IG_CLIENT_SECRET,
-            'apiCallback' => IG_CLIENT_CALLBACK
-        ));
-        //$instagram->setSignedHeader(true);
+        global $instagram;
 
         $url = $instagram->getLoginUrl(array(
             'basic',
@@ -54,7 +42,7 @@ $app->get('/login', function ($request, $response, $args) {
 
 $app->get('/logout', function ($request, $response, $args) {
     // Sample log message
-    $this->logger->info("Slim-Skeleton '/' route");
+    $this->logger->info("Slim-Skeleton '/logout' route");
 
     session_destroy();
     return $response->withRedirect(SERVER_ROOT . 'login');
@@ -63,14 +51,9 @@ $app->get('/logout', function ($request, $response, $args) {
 
 $app->get('/callback', function ($request, $response, $args) {
     // Sample log message
-    $this->logger->info("Slim-Skeleton '/' route");
+    $this->logger->info("Slim-Skeleton '/callback' route");
 
-    $instagram = new Instagram(array(
-        'apiKey'      => IG_CLIENT_ID,
-        'apiSecret'   => IG_CLIENT_SECRET,
-        'apiCallback' => IG_CLIENT_CALLBACK
-    ));
-    //$instagram->setSignedHeader(true);
+    global $instagram;
 
     $data = $instagram->getOAuthToken($_GET['code']);
 
@@ -123,21 +106,60 @@ $app->get('/callback', function ($request, $response, $args) {
         $stmt->execute();
 
         $_SESSION['access_token'] = $data->access_token;
+        $_SESSION['user_id'] = $data->user->id;
         return $response->withRedirect(SERVER_ROOT);
     }
 
 })->setName('callback');
 
+$app->get('/notfollowing', function ($request, $response, $args) {
+    // Sample log message
+    $this->logger->info("Slim-Skeleton '/notfollowing' route");
+
+    if (! isset($_SESSION['access_token'])) {
+        return $response->withRedirect(SERVER_ROOT . 'login');
+    } else {
+        global $instagram;
+        $instagram->setAccessToken($_SESSION['access_token']);
+
+        //Récupération following
+        $aFollowing = array();
+        $follower = $instagram->getUserFollows();
+        do {
+            foreach ($follower->data as $data) {
+                $aFollowing[$data->id] = $data;
+            }
+        } while ($follower = $instagram->pagination($follower));
+
+        //Récupération followers
+        $aFollowers = array();
+        $follower = $instagram->getUserFollower();
+        do {
+            foreach ($follower->data as $data) {
+                $aFollowers[$data->id] = null;
+            }
+        } while ($follower = $instagram->pagination($follower));
+
+        $aNotFollowing = array();
+        foreach ($aFollowing as $id => $data) {
+            if (! array_key_exists($id, $aFollowers)) {
+                $aNotFollowing[$id] = $data;
+            }
+        }
+
+        // Render index view
+        return $this->view->render($response, 'notfollowing.html.twig', [
+            'user' => $instagram->getUser(),
+            'notfollowing' => $aNotFollowing
+        ]);
+    }
+})->setName('notfollowing');
+
 $app->get('/hashtag/{hashtag}', function ($request, $response, $args) {
     // Sample log message
-    $this->logger->info("Slim-Skeleton '/' route");
+    $this->logger->info("Slim-Skeleton '/hashtag/{$args['hashtag']}' route");
 
-    $instagram = new Instagram(array(
-        'apiKey'      => IG_CLIENT_ID,
-        'apiSecret'   => IG_CLIENT_SECRET,
-        'apiCallback' => IG_CLIENT_CALLBACK
-    ));
-    //$instagram->setSignedHeader(true);
+    global $instagram;
 
     if (! isset($_SESSION['access_token'])) {
        return $response->withRedirect(SERVER_ROOT . 'login');
@@ -146,8 +168,6 @@ $app->get('/hashtag/{hashtag}', function ($request, $response, $args) {
 
         $photos = $instagram->getTagMedia($args['hashtag'], 60);
         $result = $instagram->pagination($photos, 5);
-
-        //var_dump($result->data[0]);
 
         // Render view
         return $this->view->render($response, 'hashtag.html.twig', [

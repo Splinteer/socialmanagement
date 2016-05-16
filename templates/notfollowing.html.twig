@@ -1,0 +1,93 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}Home - {{hashtag}}{% endblock %}
+
+{% block content %}
+<div class="brand clearfix">
+    <a href="index.html" class="logo"><img src="../templates/assets/img/logo.jpg" class="img-responsive" alt=""></a>
+    <span class="menu-btn"><i class="fa fa-bars"></i></span>
+    <ul class="ts-profile-nav">
+        <li><a href="#">Help</a></li>
+        <li><a href="#">Settings</a></li>
+        <li class="ts-account">
+            <a href="#" style="white-space: nowrap;"><img src="{{ user.data.profile_picture}}" class="ts-avatar hidden-side" alt=""> {{ user.data.username}} <i class="fa fa-angle-down hidden-side"></i></a>
+            <ul>
+                <li><a href="#">My Account</a></li>
+                <li><a href="{{ SERVER_ROOT }}logout">Logout</a></li>
+            </ul>
+        </li>
+    </ul>
+</div>
+<div class="ts-main-content">
+    <nav class="ts-sidebar">
+        <ul class="ts-sidebar-menu">
+            <li class="ts-label">Main</li>
+            <li class="open"><a href="index.html"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+
+            <!-- Account from above -->
+            <ul class="ts-profile-nav">
+                <li><a href="#">Help</a></li>
+                <li><a href="#">Settings</a></li>
+                <li class="ts-account">
+                    <a href="#"><img src="img/ts-avatar.jpg" class="ts-avatar hidden-side" alt=""> Account <i class="fa fa-angle-down hidden-side"></i></a>
+                    <ul>
+                        <li><a href="#">My Account</a></li>
+                        <li><a href="#">Edit Account</a></li>
+                        <li><a href="#">Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+
+        </ul>
+    </nav>
+    <div class="content-wrapper">
+        <div class="container-fluid">
+
+            <div class="row">
+                <div class="col-md-12">
+                    <h2 class="page-title">Dashboard</h2>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="panel panel-default">
+                                        <div class="panel-body bk-info text-light">
+                                            <div class="stat-panel text-center">
+                                                <div class="stat-panel-number h1">{{ user.data.counts.follows }}</div>
+                                                <div class="stat-panel-title text-uppercase">Following</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="panel panel-default">
+                                        <div class="panel-body bk-danger text-light">
+                                            <div class="stat-panel text-center">
+                                                <div class="stat-panel-number h1">{{ notfollowing|length }}</div>
+                                                <div class="stat-panel-title text-uppercase">Not following back</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                    {% for user in notfollowing %}
+                        <div class="col-md-2 col-xs-5">
+                            <p><img src="{{ user.profile_picture }}"></p>
+                            <p>{{ user.username }}</p>
+                            <a class="btn btn-danger" data-id="{{ user.id }}">Unfollow</a>
+                        </div>
+                    {% endfor %}
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
